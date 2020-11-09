@@ -1,28 +1,26 @@
 module.exports = {
     async execute(message) {
         const Discord = require('discord.js');
-        const { bot, channels, roles, moderation } = require("../data.json");
+        const { bot, channels, roles } = require("../data.json");
 
         //admins/moderators/minimods bypass link detection
         if (message.member.roles.cache.has(roles.admin_ID) || message.member.roles.cache.has(roles.moderator_ID) || message.member.roles.cache.has(roles.minimod_ID)) {
             return;
         }
 
-        let links = moderation.removed_links;
+        //see: https://regex101.com/r/rkT1y8/1/
+        let discordInvitePattern = /(discord\.(gg|io|me|li)|discord(app)?\.com\/invite)\/[a-z0-9]+/gi;
 
-        for (let i = 0; i < links.length; i++) {
-            console.log(links[i]);
-            //loop over all links to check if the message includes one of them
-            if (message.content.includes(links[i])) {
-                //if there's a link included
-                if (message.mentions.members.first() != undefined) {
-                    if (message.mentions.members.first().roles.cache.has(roles.admin_ID) || message.mentions.members.first().roles.cache.has(roles.moderator_ID) || message.mentions.members.first().roles.cache.has(roles.minimod_ID)) {
-                        //if an allowed role admin/moderator/minimod got mentioned in the message   
-                        return sendApproval();
-                    }
+        //check message
+        if (discordInvitePattern.test(message.content)) {
+            //if there's a link included
+            if (message.mentions.members.first() != undefined) {
+                if (message.mentions.members.first().roles.cache.has(roles.admin_ID) || message.mentions.members.first().roles.cache.has(roles.moderator_ID) || message.mentions.members.first().roles.cache.has(roles.minimod_ID)) {
+                    //if an allowed role admin/moderator/minimod got mentioned in the message   
+                    return sendApproval();
                 }
-                sendWarning();
             }
+            sendWarning();
         }
 
         function sendWarning() {
